@@ -1,6 +1,8 @@
 const qrcode = require("qrcode-terminal");
 const qrCodeImage = require("qrcode");
-const { Client, LocalAuth } = require("whatsapp-web.js");
+const mongoose = require("mongoose");
+const { MongoStore } = require("wwebjs-mongo");
+const { Client, RemoteAuth } = require("whatsapp-web.js");
 
 const logger = require("../utils/logger");
 const { withRetry } = require("../utils/retry");
@@ -8,17 +10,52 @@ const { withRetry } = require("../utils/retry");
 class WhatsAppService {
   constructor(config) {
     this.groupName = config.whatsappGroupName;
+    this.mongoUri = config.mongoUri;
+    this.sessionCollection = config.whatsappSessionCollection;
     this.isReady = false;
     this.isInitializing = false;
     this.qrCodeDataUrl = null;
     this.client = null;
+    this.store = null;
+    this.storePromise = null;
     this.initializePromise = null;
-    this.createClient();
   }
 
-  createClient() {
+  async ensureStore() {
+    if (this.store) {
+      return this.store;
+    }
+
+    if (this.storePromise) {
+      return this.storePromise;
+    }
+
+    this.storePromise = (async () => {
+      if (mongoose.connection.readyState === 0) {
+        await mongoose.connect(this.mongoUri);
+      }
+
+      this.store = new MongoStore({
+        mongoose,
+        collectionName: this.sessionCollection,
+      });
+
+      return this.store;
+    })().finally(() => {
+      this.storePromise = null;
+    });
+
+    return this.storePromise;
+  }
+
+  async createClient() {
+    const store = await this.ensureStore();
     this.client = new Client({
-      authStrategy: new LocalAuth({ clientId: "drive-notifier" }),
+      authStrategy: new RemoteAuth({
+        clientId: "drive-notifier",
+        store,
+        backupSyncIntervalMs: 300000,
+      }),
       puppeteer: {
         headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -62,6 +99,9 @@ class WhatsAppService {
   async initialize() {
     if (this.isReady) {
       return;
+    }
+    if (!this.client) {
+      await this.createClient();
     }
     if (this.initializePromise) {
       await this.initializePromise;
@@ -114,7 +154,8 @@ class WhatsAppService {
     this.isInitializing = false;
     this.qrCodeDataUrl = null;
     this.initializePromise = null;
-    this.createClient();
+    this.client = null;
+    await this.createClient();
   }
 
   setGroupName(groupName) {
@@ -168,6 +209,9 @@ class WhatsAppService {
     try {
       if (this.client) {
         await this.client.destroy();
+      }
+      if (mongoose.connection.readyState !== 0) {
+        await mongoose.disconnect();
       }
     } catch (error) {
       logger.warn("Failed to close WhatsApp client cleanly", {

@@ -7,6 +7,7 @@ const requiredEnvVars = [
   "GOOGLE_CLIENT_SECRET",
   "GOOGLE_REDIRECT_URI",
   "GOOGLE_REFRESH_TOKEN",
+  "MONGODB_URI",
 ];
 
 function getEnv() {
@@ -27,6 +28,9 @@ function getEnv() {
     driveFolderId: process.env.DRIVE_FOLDER_ID || "",
     whatsappGroupName: process.env.WHATSAPP_GROUP_NAME || "",
     pollingInterval: process.env.DRIVE_POLLING_CRON || "* * * * *",
+    mongoUri: process.env.MONGODB_URI,
+    whatsappSessionCollection:
+      process.env.WHATSAPP_SESSION_COLLECTION || "whatsapp_sessions",
   };
 }
 
