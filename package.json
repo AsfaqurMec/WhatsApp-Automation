@@ -17,6 +17,7 @@
     "googleapis": "^171.4.0",
     "mongoose": "^9.5.0",
     "node-cron": "^4.2.1",
+    "puppeteer": "^24.42.0",
     "qrcode": "^1.5.4",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.34.6",

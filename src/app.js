@@ -25,7 +25,12 @@ async function bootstrap() {
   const googleDriveService = new GoogleDriveService(config);
   const whatsappService = new WhatsAppService(config);
 
-  await whatsappService.initialize();
+  try {
+    await whatsappService.initialize();
+  } catch (err) {
+    console.error("WhatsApp init failed:", err);
+  }
+  
 
   let activeConfig = {
     driveFolderId: config.driveFolderId,
@@ -159,6 +164,6 @@ async function bootstrap() {
 }
 
 bootstrap().catch((error) => {
-  logger.error("Fatal startup error", { error: error.message });
+  console.error("FULL ERROR:", error); // 👈 ADD THIS
   process.exit(1);
 });
