@@ -1,0 +1,33 @@
+const dotenv = require("dotenv");
+
+dotenv.config();
+
+const requiredEnvVars = [
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
+  "GOOGLE_REDIRECT_URI",
+  "GOOGLE_REFRESH_TOKEN",
+];
+
+function getEnv() {
+  const missing = requiredEnvVars.filter((key) => !process.env[key]);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missing.join(", ")}`
+    );
+  }
+
+  return {
+    port: Number(process.env.PORT) || 5000,
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    googleRedirectUri: process.env.GOOGLE_REDIRECT_URI,
+    googleRefreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+    driveFolderId: process.env.DRIVE_FOLDER_ID || "",
+    whatsappGroupName: process.env.WHATSAPP_GROUP_NAME || "",
+    pollingInterval: process.env.DRIVE_POLLING_CRON || "* * * * *",
+  };
+}
+
+module.exports = getEnv;

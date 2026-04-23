@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsApp Automation Setup</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="card">
+        <h1>WhatsApp Automation Setup</h1>
+        <p class="subtext">
+          Scan QR to connect WhatsApp. After connection, submit group and Drive
+          folder details.
+        </p>
+
+        <div id="statusBanner" class="status-banner">Checking WhatsApp status...</div>
+
+        <div class="action-row">
+          <button id="connectWhatsappBtn" type="button" class="secondary hidden">
+            Connect WhatsApp
+          </button>
+          <button id="disconnectWhatsappBtn" type="button" class="danger hidden">
+            Disconnect WhatsApp
+          </button>
+        </div>
+
+        <div id="qrSection" class="qr-section hidden">
+          <img id="qrImage" class="qr-image" alt="WhatsApp QR code" />
+          <p class="hint">Open WhatsApp > Linked Devices > Link a Device.</p>
+        </div>
+
+        <form id="configForm" class="form hidden">
+          <label for="groupName">WhatsApp Group Name</label>
+          <input id="groupName" name="groupName" type="text" required />
+
+          <label for="driveFolderId">Google Drive Folder ID</label>
+          <input id="driveFolderId" name="driveFolderId" type="text" required />
+
+          <button type="submit">Establish Connection</button>
+        </form>
+
+        <section id="connectionDetails" class="details hidden">
+          <h2>Connection Details</h2>
+          <p><strong>WhatsApp:</strong> <span id="detailWhatsapp">-</span></p>
+          <p><strong>Group Name:</strong> <span id="detailGroupName">-</span></p>
+          <p><strong>Drive Folder ID:</strong> <span id="detailDriveFolderId">-</span></p>
+          <p><strong>Watcher:</strong> <span id="detailWatcher">-</span></p>
+        </section>
+      </section>
+    </main>
+
+    <div id="popup" class="popup hidden">
+      <div class="popup-content">
+        <p id="popupMessage"></p>
+        <button id="closePopup">OK</button>
+      </div>
+    </div>
+
+    <div id="confirmPopup" class="popup hidden">
+      <div class="popup-content">
+        <p>Are you sure you want to disconnect WhatsApp?</p>
+        <div class="confirm-actions">
+          <button id="confirmDisconnectBtn" type="button" class="danger">Disconnect</button>
+          <button id="cancelDisconnectBtn" type="button" class="secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

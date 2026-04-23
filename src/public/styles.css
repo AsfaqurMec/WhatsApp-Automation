@@ -1,0 +1,154 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f4f7fb;
+  color: #0d1a2b;
+}
+
+.container {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.card {
+  width: min(520px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(4, 19, 43, 0.08);
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.subtext {
+  margin: 0 0 16px;
+  color: #45556d;
+}
+
+.status-banner {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #e8f0ff;
+  color: #163d82;
+  margin-bottom: 16px;
+}
+
+.action-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.qr-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.qr-image {
+  width: 260px;
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid #dce3ef;
+  padding: 10px;
+  background: #fff;
+}
+
+.hint {
+  margin-top: 10px;
+  color: #5d6e87;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+.details {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid #d7e1f0;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.details h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.details p {
+  margin: 6px 0;
+  color: #2f3d51;
+}
+
+label {
+  font-size: 14px;
+  color: #2f3d51;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #cfd9ea;
+}
+
+button {
+  margin-top: 8px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  padding: 11px 14px;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #7f9edf;
+  cursor: not-allowed;
+}
+
+.secondary {
+  background: #334155;
+}
+
+.danger {
+  background: #dc2626;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.popup {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.popup-content {
+  width: min(360px, 90%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.hidden {
+  display: none;
+}
