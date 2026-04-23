@@ -1,6 +1,7 @@
 const qrcode = require("qrcode-terminal");
 const qrCodeImage = require("qrcode");
 const mongoose = require("mongoose");
+const fs = require("fs");
 const { MongoStore } = require("wwebjs-mongo");
 const { Client, RemoteAuth } = require("whatsapp-web.js");
 
@@ -64,24 +65,36 @@ class WhatsAppService {
       }
     }
 
+    if (executablePath && !fs.existsSync(executablePath)) {
+      logger.warn("Configured browser executable path does not exist", {
+        executablePath,
+      });
+      executablePath = undefined;
+    }
+
+    const puppeteerConfig = {
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--no-zygote",
+        "--single-process",
+      ],
+    };
+
+    if (executablePath) {
+      puppeteerConfig.executablePath = executablePath;
+    }
+
     this.client = new Client({
       authStrategy: new RemoteAuth({
         clientId: "drive-notifier",
         store,
         backupSyncIntervalMs: 300000,
       }),
-      puppeteer: {
-        executablePath,
-        headless: true,
-        args: [
-          "--no-sandbox",
-          "--disable-setuid-sandbox",
-          "--disable-dev-shm-usage",
-          "--disable-gpu",
-          "--no-zygote",
-          "--single-process",
-        ],
-      },
+      puppeteer: puppeteerConfig,
     });
     this.registerEvents();
   }
