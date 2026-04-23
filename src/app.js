@@ -72,10 +72,14 @@ async function bootstrap() {
         message: "WhatsApp connection started. Scan the QR code to continue.",
       });
     } catch (error) {
-      logger.error("Failed to start WhatsApp connection", { error: error.message });
+      const normalizedMessage = String(error.message || "Unknown error");
+      logger.error("Failed to start WhatsApp connection", {
+        error: normalizedMessage,
+        stack: error.stack,
+      });
       return res.status(500).json({
         success: false,
-        message: "Failed to start WhatsApp connection.",
+        message: `Failed to start WhatsApp connection: ${normalizedMessage}`,
       });
     }
   });

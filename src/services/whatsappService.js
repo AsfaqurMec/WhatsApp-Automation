@@ -51,6 +51,18 @@ class WhatsAppService {
   async createClient() {
     const store = await this.ensureStore();
     const puppeteer = require("puppeteer");
+    const configuredExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    let executablePath = configuredExecutablePath;
+
+    if (!executablePath) {
+      try {
+        executablePath = puppeteer.executablePath();
+      } catch (error) {
+        logger.warn("Unable to resolve Puppeteer executablePath automatically", {
+          error: error.message,
+        });
+      }
+    }
 
     this.client = new Client({
       authStrategy: new RemoteAuth({
@@ -59,7 +71,7 @@ class WhatsAppService {
         backupSyncIntervalMs: 300000,
       }),
       puppeteer: {
-        executablePath: puppeteer.executablePath(), // 🔥 VERY IMPORTANT
+        executablePath,
         headless: true,
         args: [
           "--no-sandbox",
@@ -123,13 +135,34 @@ class WhatsAppService {
       .initialize()
       .catch((error) => {
         this.isInitializing = false;
+        this.isReady = false;
+        this.qrCodeDataUrl = null;
+        logger.error("WhatsApp client initialization failed", {
+          error: error.message,
+          stack: error.stack,
+        });
         throw error;
       })
       .finally(() => {
         this.initializePromise = null;
       });
 
-    await this.initializePromise;
+    try {
+      await this.initializePromise;
+    } catch (error) {
+      // Keep subsequent connect attempts healthy by resetting the client.
+      if (this.client) {
+        try {
+          await this.client.destroy();
+        } catch (destroyError) {
+          logger.warn("Failed to destroy client after init error", {
+            error: destroyError.message,
+          });
+        }
+      }
+      this.client = null;
+      throw error;
+    }
   }
 
   async connect() {
