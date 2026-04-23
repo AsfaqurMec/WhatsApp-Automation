@@ -4,7 +4,7 @@
   "description": "Google Drive to WhatsApp automation service",
   "main": "src/app.js",
   "scripts": {
-    "postinstall": "npx puppeteer browsers install chrome",
+    "postinstall": "node node_modules/puppeteer/install.mjs",
     "start": "node src/app.js",
     "dev": "node --watch src/app.js"
   },
