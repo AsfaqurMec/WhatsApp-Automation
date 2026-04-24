@@ -15,7 +15,10 @@
           folder details.
         </p>
 
-        <div id="statusBanner" class="status-banner">Checking WhatsApp status...</div>
+        <div id="statusBanner" class="status-banner">
+          <span id="statusLoader" class="status-loader hidden" aria-hidden="true"></span>
+          <span id="statusText">Checking WhatsApp status...</span>
+        </div>
 
         <div class="action-row">
           <button id="connectWhatsappBtn" type="button" class="secondary hidden">

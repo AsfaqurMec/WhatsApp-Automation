@@ -40,6 +40,28 @@ h1 {
   background: #e8f0ff;
   color: #163d82;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-loader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #9ab5e7;
+  border-top-color: #163d82;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .action-row {

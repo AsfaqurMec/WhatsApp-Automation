@@ -33,6 +33,8 @@ class WhatsAppService {
     this.authPath = config.whatsappAuthPath;
     this.remoteBackupIntervalMs = config.whatsappRemoteBackupIntervalMs;
     this.authMode = config.whatsappAuthMode;
+    this.launchTimeoutMs = config.whatsappLaunchTimeoutMs;
+    this.protocolTimeoutMs = config.whatsappProtocolTimeoutMs;
     this.isReady = false;
     this.isInitializing = false;
     this.qrCodeDataUrl = null;
@@ -107,12 +109,20 @@ class WhatsAppService {
 
     const puppeteerConfig = {
       headless: true,
+      timeout: this.launchTimeoutMs,
+      protocolTimeout: this.protocolTimeoutMs,
+      dumpio: process.env.PUPPETEER_DUMPIO === "true",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
+        "--single-process",
         "--no-zygote",
+        "--disable-software-rasterizer",
+        "--disable-background-networking",
+        "--disable-background-timer-throttling",
+        "--disable-renderer-backgrounding",
         "--disable-features=site-per-process",
       ],
     };

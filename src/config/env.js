@@ -35,6 +35,10 @@ function getEnv() {
     whatsappRemoteBackupIntervalMs:
       Number(process.env.WHATSAPP_REMOTE_BACKUP_INTERVAL_MS) || 60000,
     whatsappAuthMode: process.env.WHATSAPP_AUTH_MODE || "hybrid",
+    whatsappLaunchTimeoutMs:
+      Number(process.env.WHATSAPP_LAUNCH_TIMEOUT_MS) || 120000,
+    whatsappProtocolTimeoutMs:
+      Number(process.env.WHATSAPP_PROTOCOL_TIMEOUT_MS) || 120000,
   };
 }
 

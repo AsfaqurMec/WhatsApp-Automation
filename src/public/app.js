@@ -1,4 +1,6 @@
 const statusBanner = document.getElementById("statusBanner");
+const statusText = document.getElementById("statusText");
+const statusLoader = document.getElementById("statusLoader");
 const qrSection = document.getElementById("qrSection");
 const qrImage = document.getElementById("qrImage");
 const configForm = document.getElementById("configForm");
@@ -35,8 +37,11 @@ function hideDisconnectConfirm() {
   confirmPopup.classList.add("hidden");
 }
 
-function setStatus(text) {
-  statusBanner.textContent = text;
+function setStatus(text, showLoader = false) {
+  statusText.textContent = text;
+  statusLoader.classList.toggle("hidden", !showLoader);
+  statusLoader.setAttribute("aria-hidden", String(!showLoader));
+  statusBanner.setAttribute("aria-busy", String(showLoader));
 }
 
 function updateUi(status) {
@@ -55,7 +60,7 @@ function updateUi(status) {
     disconnectWhatsappBtn.classList.remove("hidden");
   } else {
     if (status.connecting) {
-      setStatus("Connecting... scan the QR code to connect WhatsApp.");
+      setStatus("Connecting... scan the QR code to connect WhatsApp.", true);
     } else {
       setStatus('WhatsApp disconnected. Click "Connect WhatsApp" to generate QR.');
     }
