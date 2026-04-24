@@ -61,6 +61,8 @@ function main() {
 try {
   main();
 } catch (error) {
-  console.error("[chrome] Startup check failed:", error.message);
-  process.exit(1);
+  console.warn("[chrome] Startup check warning:", error.message);
+  console.warn(
+    "[chrome] Continuing startup. Set PUPPETEER_EXECUTABLE_PATH or CHROME_BIN if Render cannot find Chromium."
+  );
 }

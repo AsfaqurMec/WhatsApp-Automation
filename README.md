@@ -81,4 +81,26 @@ npm start
 
 - Polling runs every minute by default (`DRIVE_POLLING_CRON`).
 - Last processed timestamps and notified IDs are saved in `src/data/drive-state.json` to avoid duplicate messages across restarts.
-- WhatsApp session is persisted by `LocalAuth`.
+- In production, WhatsApp session should be persisted with `RemoteAuth` + MongoDB.
+
+## Render deployment checklist
+
+Use a **Web Service** with:
+
+- Build command: `npm install`
+- Start command: `npm start`
+- Runtime: Node 20+
+
+Set these Render environment variables:
+
+- `NODE_ENV=production`
+- `MONGODB_URI` (required for WhatsApp `RemoteAuth`)
+- `WHATSAPP_AUTH_MODE=remote`
+- `WHATSAPP_SESSION_COLLECTION=whatsapp_sessions` (or custom)
+- `PUPPETEER_EXECUTABLE_PATH` only if Render cannot auto-detect Chromium
+
+Operational notes for Render:
+
+- HTTP server now starts immediately; WhatsApp initializes in background so deploy health checks pass.
+- If WhatsApp bootstrap fails once, auto-reconnect/keep-alive retries continue without crashing the app.
+- Do not rely on local `LocalAuth` folders in Render; use Mongo-backed session persistence.

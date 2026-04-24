@@ -25,14 +25,6 @@ async function bootstrap() {
   const googleDriveService = new GoogleDriveService(config);
   const whatsappService = new WhatsAppService(config);
 
-  try {
-    await whatsappService.initialize();
-  } catch (err) {
-    console.error("WhatsApp init failed:", err);
-  }
-  whatsappService.startKeepAlive();
-  
-
   let activeConfig = {
     driveFolderId: config.driveFolderId,
     whatsappGroupName: config.whatsappGroupName,
@@ -145,6 +137,19 @@ async function bootstrap() {
   const server = app.listen(config.port, () => {
     logger.info(`Server started on port ${config.port}`);
   });
+
+  async function initializeWhatsAppInBackground() {
+    try {
+      await whatsappService.initialize();
+    } catch (error) {
+      logger.error("Initial WhatsApp boot failed, keep-alive will retry", {
+        error: error.message,
+      });
+    }
+  }
+
+  initializeWhatsAppInBackground();
+  whatsappService.startKeepAlive();
 
   if (activeConfig.driveFolderId && activeConfig.whatsappGroupName) {
     startDriveWatcher();

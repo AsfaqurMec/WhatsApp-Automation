@@ -1,2 +1,6 @@
 .wwebjs_auth/
+.wwebjs_cache/
 .env
+node_modules/
+src/data/drive-state.json
+.puppeteer-cache/

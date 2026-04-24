@@ -87,7 +87,8 @@ class WhatsAppService {
         : path.join(process.cwd(), ".puppeteer-cache");
     }
     const puppeteer = require("puppeteer");
-    const configuredExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    const configuredExecutablePath =
+      process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_BIN;
     let executablePath = configuredExecutablePath;
 
     if (!executablePath) {
@@ -107,24 +108,37 @@ class WhatsAppService {
       executablePath = undefined;
     }
 
+    if (!executablePath && process.env.RENDER) {
+      const renderPaths = ["/usr/bin/chromium", "/usr/bin/chromium-browser"];
+      const detectedPath = renderPaths.find((candidate) => fs.existsSync(candidate));
+      if (detectedPath) {
+        executablePath = detectedPath;
+      }
+    }
+
+    const puppeteerArgs = [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--disable-software-rasterizer",
+      "--disable-background-networking",
+      "--disable-background-timer-throttling",
+      "--disable-renderer-backgrounding",
+      "--disable-features=site-per-process",
+    ];
+
+    // These flags are known to cause Chromium instability on Windows.
+    if (process.platform !== "win32") {
+      puppeteerArgs.push("--single-process", "--no-zygote");
+    }
+
     const puppeteerConfig = {
       headless: true,
       timeout: this.launchTimeoutMs,
       protocolTimeout: this.protocolTimeoutMs,
       dumpio: process.env.PUPPETEER_DUMPIO === "true",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--single-process",
-        "--no-zygote",
-        "--disable-software-rasterizer",
-        "--disable-background-networking",
-        "--disable-background-timer-throttling",
-        "--disable-renderer-backgrounding",
-        "--disable-features=site-per-process",
-      ],
+      args: puppeteerArgs,
     };
 
     if (executablePath) {
@@ -163,6 +177,11 @@ class WhatsAppService {
     this.client = new Client({
       authStrategy,
       puppeteer: puppeteerConfig,
+    });
+    logger.info("WhatsApp client created", {
+      authMode: this.authMode,
+      hasExecutablePath: Boolean(puppeteerConfig.executablePath),
+      render: Boolean(process.env.RENDER),
     });
     this.registerEvents();
   }
@@ -251,6 +270,22 @@ class WhatsAppService {
         }
       }
       this.client = null;
+
+      const normalizedMessage = String(error.message || "").toLowerCase();
+      const canRetry =
+        normalizedMessage.includes("navigating frame was detached") ||
+        normalizedMessage.includes("lifecyclewatcher disposed");
+
+      if (canRetry) {
+        logger.warn("Retrying WhatsApp client initialization after transient browser error", {
+          error: error.message,
+        });
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await this.createClient();
+        await this.client.initialize();
+        return;
+      }
+
       throw error;
     }
   }
