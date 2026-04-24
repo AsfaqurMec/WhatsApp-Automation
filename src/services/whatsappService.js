@@ -80,7 +80,9 @@ class WhatsAppService {
 
   async createClient() {
     if (!process.env.PUPPETEER_CACHE_DIR) {
-      process.env.PUPPETEER_CACHE_DIR = path.join(process.cwd(), ".puppeteer-cache");
+      process.env.PUPPETEER_CACHE_DIR = process.env.RENDER
+        ? "/opt/render/.cache/puppeteer"
+        : path.join(process.cwd(), ".puppeteer-cache");
     }
     const puppeteer = require("puppeteer");
     const configuredExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
