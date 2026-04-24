@@ -30,6 +30,7 @@ async function bootstrap() {
   } catch (err) {
     console.error("WhatsApp init failed:", err);
   }
+  whatsappService.startKeepAlive();
   
 
   let activeConfig = {

@@ -31,6 +31,10 @@ function getEnv() {
     mongoUri: process.env.MONGODB_URI,
     whatsappSessionCollection:
       process.env.WHATSAPP_SESSION_COLLECTION || "whatsapp_sessions",
+    whatsappAuthPath: process.env.WHATSAPP_AUTH_PATH || ".wwebjs_auth",
+    whatsappRemoteBackupIntervalMs:
+      Number(process.env.WHATSAPP_REMOTE_BACKUP_INTERVAL_MS) || 60000,
+    whatsappAuthMode: process.env.WHATSAPP_AUTH_MODE || "hybrid",
   };
 }
 

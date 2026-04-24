@@ -2,17 +2,37 @@ const qrcode = require("qrcode-terminal");
 const qrCodeImage = require("qrcode");
 const mongoose = require("mongoose");
 const fs = require("fs");
+const path = require("path");
 const { MongoStore } = require("wwebjs-mongo");
-const { Client, RemoteAuth } = require("whatsapp-web.js");
+const { Client, RemoteAuth, LocalAuth } = require("whatsapp-web.js");
 
 const logger = require("../utils/logger");
 const { withRetry } = require("../utils/retry");
+
+class SafeRemoteAuth extends RemoteAuth {
+  async deleteMetadata() {
+    try {
+      await super.deleteMetadata();
+    } catch (error) {
+      if (error && error.code === "ENOENT") {
+        logger.warn("Skipping missing RemoteAuth temp metadata directory", {
+          error: error.message,
+        });
+        return;
+      }
+      throw error;
+    }
+  }
+}
 
 class WhatsAppService {
   constructor(config) {
     this.groupName = config.whatsappGroupName;
     this.mongoUri = config.mongoUri;
     this.sessionCollection = config.whatsappSessionCollection;
+    this.authPath = config.whatsappAuthPath;
+    this.remoteBackupIntervalMs = config.whatsappRemoteBackupIntervalMs;
+    this.authMode = config.whatsappAuthMode;
     this.isReady = false;
     this.isInitializing = false;
     this.qrCodeDataUrl = null;
@@ -20,6 +40,15 @@ class WhatsAppService {
     this.store = null;
     this.storePromise = null;
     this.initializePromise = null;
+    this.keepAliveTimer = null;
+  }
+
+  resolveAuthPath() {
+    const configuredPath = this.authPath || ".wwebjs_auth";
+    if (process.platform === "win32" && configuredPath.startsWith("/")) {
+      return path.join(process.cwd(), ".wwebjs_auth");
+    }
+    return configuredPath;
   }
 
   async ensureStore() {
@@ -50,7 +79,9 @@ class WhatsAppService {
   }
 
   async createClient() {
-    const store = await this.ensureStore();
+    if (!process.env.PUPPETEER_CACHE_DIR) {
+      process.env.PUPPETEER_CACHE_DIR = path.join(process.cwd(), ".puppeteer-cache");
+    }
     const puppeteer = require("puppeteer");
     const configuredExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
     let executablePath = configuredExecutablePath;
@@ -80,7 +111,7 @@ class WhatsAppService {
         "--disable-dev-shm-usage",
         "--disable-gpu",
         "--no-zygote",
-        "--single-process",
+        "--disable-features=site-per-process",
       ],
     };
 
@@ -88,12 +119,37 @@ class WhatsAppService {
       puppeteerConfig.executablePath = executablePath;
     }
 
-    this.client = new Client({
-      authStrategy: new RemoteAuth({
+    const mustUseRemoteAuth =
+      this.authMode === "remote" || process.env.NODE_ENV === "production";
+    let authStrategy;
+    try {
+      const store = await this.ensureStore();
+      authStrategy = new SafeRemoteAuth({
         clientId: "drive-notifier",
         store,
-        backupSyncIntervalMs: 300000,
-      }),
+        backupSyncIntervalMs: this.remoteBackupIntervalMs,
+      });
+      logger.info("Using RemoteAuth for WhatsApp session persistence.");
+    } catch (error) {
+      if (mustUseRemoteAuth) {
+        logger.error("RemoteAuth is required but unavailable", {
+          error: error.message,
+        });
+        throw error;
+      }
+      const dataPath = this.resolveAuthPath();
+      logger.warn("Falling back to LocalAuth for WhatsApp persistence", {
+        error: error.message,
+        authPath: dataPath,
+      });
+      authStrategy = new LocalAuth({
+        clientId: "drive-notifier",
+        dataPath,
+      });
+    }
+
+    this.client = new Client({
+      authStrategy,
       puppeteer: puppeteerConfig,
     });
     this.registerEvents();
@@ -128,6 +184,15 @@ class WhatsAppService {
       this.isReady = false;
       this.isInitializing = false;
       logger.warn("WhatsApp client disconnected", { reason });
+
+      // Reinitialize automatically unless the user explicitly logged out from phone.
+      if (reason !== "LOGOUT") {
+        setTimeout(() => {
+          this.connect().catch((error) => {
+            logger.error("Auto-reconnect failed", { error: error.message });
+          });
+        }, 5000);
+      }
     });
   }
 
@@ -182,20 +247,30 @@ class WhatsAppService {
     await this.initialize();
   }
 
+  startKeepAlive(intervalMs = 15000) {
+    if (this.keepAliveTimer) {
+      return;
+    }
+
+    this.keepAliveTimer = setInterval(() => {
+      if (this.isReady || this.isInitializing) {
+        return;
+      }
+
+      this.connect().catch((error) => {
+        logger.warn("Background WhatsApp reconnect attempt failed", {
+          error: error.message,
+        });
+      });
+    }, intervalMs);
+  }
+
   async disconnect() {
     if (!this.client) {
       this.isReady = false;
       this.isInitializing = false;
       this.qrCodeDataUrl = null;
       return;
-    }
-
-    try {
-      await this.client.logout();
-    } catch (error) {
-      logger.warn("WhatsApp logout failed or not required", {
-        error: error.message,
-      });
     }
 
     try {
@@ -263,6 +338,10 @@ class WhatsAppService {
 
   async shutdown() {
     try {
+      if (this.keepAliveTimer) {
+        clearInterval(this.keepAliveTimer);
+        this.keepAliveTimer = null;
+      }
       if (this.client) {
         await this.client.destroy();
       }
